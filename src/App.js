@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import AuthForm from "./components/AuthForm";
 import { AuthContextProvider } from "./components/store/auth-context";
 import Home from "./components/pages/Home";
+import Welcome from "./components/pages/Welcome";
 
 function App() {
   return (
@@ -12,7 +13,7 @@ function App() {
 
         {/* Auth page */}
         <Route path="/auth" element={<AuthForm />} />
-
+   <Route path="/welcome" element={<Welcome />} />
         {/* Optional: catch-all for invalid routes */}
         <Route path="*" element={<Home />} />
       </Routes>

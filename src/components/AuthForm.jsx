@@ -62,7 +62,7 @@ const AuthForm = () => {
       .then((data) => {
         authCtx.login(data.idToken);
         console.log("🎉 Login successful for:", enteredEmail);
-        navigate("/", { replace: true });
+      navigate("/welcome", { replace: true });
       })
       .catch((err) => {
         alert(err.message);
