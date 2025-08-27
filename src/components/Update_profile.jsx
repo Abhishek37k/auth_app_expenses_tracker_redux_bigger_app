@@ -1,7 +1,6 @@
-// src/components/pages/UpdateProfile.jsx
 import React, { useState, useContext } from "react";
+import { useEffect } from "react";
 import AuthContext from "../components/store/auth-context";
-
 
 const FIREBASE_KEY = process.env.REACT_APP_FIREBASE_API_KEY;
 
@@ -10,6 +9,41 @@ const UpdateProfile = ({ setIsUpdating }) => {
   const [fullName, setFullName] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch existing user data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(
+          `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken: authCtx.token }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error("Error fetching user data:", data);
+          throw new Error(data.error?.message || "Failed to fetch user data");
+        }
+
+        if (data.users && data.users.length > 0) {
+          const user = data.users[0];
+          setFullName(user.displayName || "");
+          setPhotoUrl(user.photoUrl || "");
+          console.log("✅ User data loaded:", user);
+        }
+      } catch (err) {
+        console.error("Error in fetching user data:", err);
+        alert("Error loading profile: " + err.message);
+      }
+    };
+
+    fetchUserData();
+  }, [authCtx.token]);
 
   const updateHandler = async () => {
     if (!fullName && !photoUrl) {
@@ -37,14 +71,9 @@ const UpdateProfile = ({ setIsUpdating }) => {
       const data = await response.json();
       setIsLoading(false);
 
-      // Check for undefined values or errors
       if (!response.ok) {
         console.error("Firebase Error Response:", data);
         throw new Error(data.error?.message || "Profile update failed");
-      }
-
-      if (!data.displayName && !data.photoUrl) {
-        console.warn("Warning: displayName or photoUrl is undefined", data);
       }
 
       console.log("✅ Profile updated successfully:", data);
@@ -96,6 +125,7 @@ const UpdateProfile = ({ setIsUpdating }) => {
   );
 };
 
+// (Styles remain the same as your previous version)
 const styles = {
   container: {
     maxWidth: "400px",

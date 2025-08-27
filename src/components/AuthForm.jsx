@@ -9,7 +9,6 @@ const AuthForm = () => {
 
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
   const confirmPasswordRef = useRef();
