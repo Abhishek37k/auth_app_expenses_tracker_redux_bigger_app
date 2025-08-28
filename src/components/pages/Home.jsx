@@ -28,7 +28,7 @@ const Home = () => {
 const styles = {
   container: {
     fontFamily: "Arial, sans-serif",
-    minHeight: "100vh",
+    minHeight: "80vh",
     display: "flex",
     flexDirection: "column",
   },

@@ -2,19 +2,22 @@ import { useState, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "./store/auth-context";
 import classes from "./AuthForm.module.css";
+
 const FIREBASE_KEY = process.env.REACT_APP_FIREBASE_API_KEY;
+
 const AuthForm = () => {
   const authCtx = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
   const confirmPasswordRef = useRef();
 
   const switchAuthModeHandler = () => {
-    setIsLogin((prevState) => !prevState);
+    setIsLogin((prev) => !prev);
   };
 
   const handleSubmit = (event) => {
@@ -31,12 +34,9 @@ const AuthForm = () => {
 
     setIsLoading(true);
 
-    let url;
-    if (isLogin) {
-      url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_KEY}`;
-    } else {
-      url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_KEY}`;
-    }
+    const url = isLogin
+      ? `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_KEY}`
+      : `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_KEY}`;
 
     fetch(url, {
       method: "POST",
@@ -45,23 +45,19 @@ const AuthForm = () => {
         password: enteredPassword,
         returnSecureToken: true,
       }),
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     })
-      .then(async (response) => {
+      .then(async (res) => {
         setIsLoading(false);
-        if (response.ok) {
-          return response.json();
-        } else {
-          const data = await response.json();
+        if (!res.ok) {
+          const data = await res.json();
           throw new Error(data.error.message);
         }
+        return res.json();
       })
       .then((data) => {
         authCtx.login(data.idToken);
-        console.log("🎉 Login successful for:", enteredEmail);
-      navigate("/welcome", { replace: true });
+        navigate("/welcome", { replace: true });
       })
       .catch((err) => {
         alert(err.message);
@@ -83,24 +79,15 @@ const AuthForm = () => {
         </div>
         <div className={classes.control}>
           <label htmlFor="password">Your Password</label>
-          <input
-            type="password"
-            id="password"
-            ref={passwordInputRef}
-            required
-          />
+          <input type="password" id="password" ref={passwordInputRef} required />
         </div>
         {!isLogin && (
           <div className={classes.control}>
             <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              ref={confirmPasswordRef}
-              required
-            />
+            <input type="password" id="confirmPassword" ref={confirmPasswordRef} required />
           </div>
         )}
+
         <div className={classes.actions}>
           {!isLoading && (
             <button className={classes.btn}>
@@ -108,12 +95,23 @@ const AuthForm = () => {
             </button>
           )}
           {isLoading && <p>Sending request...</p>}
+        </div>
+
+        <div className={classes.extraActions}>
           <button
             type="button"
             className={classes.toggle}
             onClick={switchAuthModeHandler}
           >
             {isLogin ? "Create new account" : "Login with existing account"}
+          </button>
+
+          <button
+            type="button"
+            className={classes.forgotPassword}
+            onClick={() => navigate("/forget-password")}
+          >
+            Forgot Password?
           </button>
         </div>
       </form>
