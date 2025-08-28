@@ -1,37 +1,35 @@
 import { useContext } from "react";
-// import {  useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../store/auth-context";
 
-const Home = () => {
+const Navbar = () => {
   const authCtx = useContext(AuthContext);
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
-  
+  const logoutHandler = () => {
+    authCtx.logout();
+    navigate("/auth", { replace: true });
+  };
 
   return (
-    <div style={styles.container}>
-   
-
-      {/* Page Content */}
-      <main style={styles.main}>
-        <h1>Welcome to MyApp 🚀</h1>
-        <p>
-          {authCtx.isLoggedIn
-            ? "You are logged in! Enjoy browsing."
-            : "Please log in to continue."}
-        </p>
-      </main>
-    </div>
+    <nav style={styles.navbar}>
+      <h1 style={styles.logo}>Expense Tracker</h1>
+      <div>
+        {authCtx.isLoggedIn ? (
+          <button style={styles.logoutBtn} onClick={logoutHandler}>
+            Logout
+          </button>
+        ) : (
+          <Link to="/auth">
+            <button style={styles.loginBtn}>Login</button>
+          </Link>
+        )}
+      </div>
+    </nav>
   );
 };
 
 const styles = {
-  container: {
-    fontFamily: "Arial, sans-serif",
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-  },
   navbar: {
     display: "flex",
     justifyContent: "space-between",
@@ -65,16 +63,6 @@ const styles = {
     fontWeight: "bold",
     transition: "0.3s",
   },
-  main: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: "2rem",
-    textAlign: "center",
-    padding: "0 1rem",
-  },
 };
 
-export default Home;
+export default Navbar;

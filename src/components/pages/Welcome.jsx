@@ -1,5 +1,4 @@
 import { useContext, useState , useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import AuthContext from "../store/auth-context";
 import UpdateProfile from "../Update_profile";
 
@@ -8,13 +7,6 @@ const Welcome = () => {
   const authCtx = useContext(AuthContext);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(null); 
-  const navigate = useNavigate();
-
-  const logoutHandler = () => {
-    authCtx.logout();
-    navigate("/auth", { replace: true });
-  };
-
   // Check email verification status
 useEffect(() => {
   const interval = setInterval(async () => {
@@ -76,9 +68,7 @@ useEffect(() => {
       {/* Header */}
       <div style={styles.header}>
         <h1>🎉 Welcome to Expense Tracker!</h1>
-        <button style={styles.logoutBtn} onClick={logoutHandler}>
-          Logout
-        </button>
+       
       </div>
 
       {/* Email Verification Section */}
@@ -132,8 +122,7 @@ const styles = {
     textAlign: "center",
   },
   header: {
-    display: "flex",
-    justifyContent: "space-between",
+  
     alignItems: "center",
     marginBottom: "1rem",
   },
