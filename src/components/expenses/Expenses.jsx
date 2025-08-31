@@ -1,20 +1,12 @@
 import { useState, useContext } from "react";
 import AuthContext from "../store/auth-context";
-
+import { useEffect } from "react";
 const Expenses = () => {
   const authCtx = useContext(AuthContext);
   const [money, setMoney] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Food");
   const [expenses, setExpenses] = useState([]);
-
-  if (!authCtx.isLoggedIn) {
-    return (
-      <div style={{ textAlign: "center", marginTop: "2rem" }}>
-        <h2>Please login to add expenses</h2>
-      </div>
-    );
-  }
 
   const submitHandler = (e) => {
     e.preventDefault();
@@ -30,12 +22,74 @@ const Expenses = () => {
       description,
       category,
     };
+    fetch(
+      `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${authCtx.userId}.json?auth=${authCtx.token}`,
+      {
+        method: "POST",
+        body: JSON.stringify(newExpense),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to add expense");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // Firebase gives back generated id
+        setExpenses((prev) => [{ id: data.name, ...newExpense }, ...prev]);
+        setMoney("");
+        setDescription("");
+        setCategory("Food");
+      })
+      .catch((err) => alert(err.message));
 
-    setExpenses((prev) => [newExpense, ...prev]);
-    setMoney("");
-    setDescription("");
-    setCategory("Food");
+    //get
   };
+
+useEffect(() => {
+  const fetchExpenses = async () => {
+    const token = authCtx.token || localStorage.getItem("token");
+    const userId = authCtx.userId || localStorage.getItem("userId");
+
+    if (!token || !userId) return;
+
+    try {
+      const res = await fetch(
+        `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${userId}.json?auth=${token}`
+      );
+
+      if (!res.ok) throw new Error("Failed to fetch expenses");
+
+      const data = await res.json();
+      if (!data) {
+        setExpenses([]);
+        return;
+      }
+
+      const loaded = Object.entries(data).map(([key, value]) => ({
+        id: key,
+        ...value,
+      }));
+      setExpenses(loaded.reverse());
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  fetchExpenses();
+}, [authCtx.token, authCtx.userId]);
+
+  if (!authCtx.isLoggedIn) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "2rem" }}>
+        <h2>Please login to add expenses</h2>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -73,17 +127,17 @@ const Expenses = () => {
 
       <h3 style={{ marginTop: "2rem" }}>Your Expenses:</h3>
       {expenses.length === 0 && <p>No expenses added yet.</p>}
-     <ul style={styles.list}>
-  {expenses.map((exp) => (
-    <li key={exp.id} style={styles.listItem}>
-      <div style={styles.expenseInfo}>
-        <span style={styles.money}>${exp.money}</span>
-        <span>{exp.description}</span>
-      </div>
-      <span style={styles.categoryBadge}>{exp.category}</span>
-    </li>
-  ))}
-</ul>
+      <ul style={styles.list}>
+        {expenses.map((exp) => (
+          <li key={exp.id} style={styles.listItem}>
+            <div style={styles.expenseInfo}>
+              <span style={styles.money}>${exp.money}</span>
+              <span>{exp.description}</span>
+            </div>
+            <span style={styles.categoryBadge}>{exp.category}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

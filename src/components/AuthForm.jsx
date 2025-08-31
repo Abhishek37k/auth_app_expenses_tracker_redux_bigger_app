@@ -56,7 +56,8 @@ const AuthForm = () => {
         return res.json();
       })
       .then((data) => {
-        authCtx.login(data.idToken);
+        authCtx.login(data.idToken, data.localId);
+        // console.log(data)
         navigate("/welcome", { replace: true });
       })
       .catch((err) => {

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 const AuthContext = React.createContext({
   token: "",
   isLoggedIn: false,
-  login: (token) => {},
+  login: (token, userId) => {},
   logout: () => {},
 });
 
@@ -13,6 +13,8 @@ const EXP_MS = 5 * 60 * 1000; // 5 minutes auto-expiry
 export const AuthContextProvider = (props) => {
   const initialToken = localStorage.getItem("token");
   const [token, setToken] = useState(initialToken);
+  const [userId, setUserId] = useState(null);
+
   const navigate = useNavigate();
 
   const userIsLoggedIn = !!token;
@@ -24,11 +26,13 @@ export const AuthContextProvider = (props) => {
     timerRef.current = null;
   };
 
-const loginHandler = (newToken) => {
+const loginHandler = (newToken, userId) => {
   const expiryAt = Date.now() + EXP_MS;
   localStorage.setItem("token", newToken);
+  localStorage.setItem("userId", userId);
   localStorage.setItem("tokenExpiry", String(expiryAt));
   setToken(newToken);
+  setUserId(userId);
   clearTimer();
   timerRef.current = setTimeout(() => logoutHandler(), EXP_MS);
 
@@ -60,6 +64,7 @@ const logoutHandler = () => {
 
   const contextValue = {
     token,
+      userId: userId,
     isLoggedIn: userIsLoggedIn,
     login: loginHandler,
     logout: logoutHandler,
