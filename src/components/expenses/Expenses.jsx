@@ -1,28 +1,37 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { expenseActions } from "../store/expense";
+import { themeActions } from "../store/theme"; // Make sure you have theme reducer
+import React from "react";
 
 const Expenses = () => {
   const dispatch = useDispatch();
 
-  // ✅ Get auth state from Redux
+  // Auth state
   const token = useSelector((state) => state.auth.token);
   const userId = useSelector((state) => state.auth.userId);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
 
-  // ✅ Get expenses state from Redux
+  // Expenses state
   const expenses = useSelector((state) => state.expense.expenses);
 
+  // Theme state
+  const darkMode = useSelector((state) => state.theme.darkMode);
+
+  // Local state
   const [money, setMoney] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Food");
   const [editId, setEditId] = useState(null);
 
-  useEffect(() => {
-    // if (!userId || !token) return;
+  const totalExpenses = expenses.reduce(
+    (sum, exp) => sum + Number(exp.money),
+    0
+  );
 
-    // Fetch expenses from Firebase
+  // Fetch expenses from Firebase
+  useEffect(() => {
+    if (!userId || !token) return;
     fetch(
       `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${userId}.json?auth=${token}`
     )
@@ -39,12 +48,10 @@ const Expenses = () => {
           id: key,
           ...value,
         }));
-        console.log("Fetched expenses:", loaded);
         dispatch(expenseActions.setExpenses(loaded.reverse()));
       })
       .catch((err) => alert(err.message));
   }, [userId, token, dispatch]);
-        const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.money), 0);
 
   const resetForm = () => {
     setMoney("");
@@ -75,10 +82,7 @@ const Expenses = () => {
           return res.json();
         })
         .then(() => {
-          dispatch(
-            expenseActions.updateExpense({ id: editId, ...expenseData })
-          );
-          console.log("Expense successfully updated");
+          dispatch(expenseActions.updateExpense({ id: editId, ...expenseData }));
           resetForm();
         })
         .catch((err) => alert(err.message));
@@ -97,10 +101,7 @@ const Expenses = () => {
           return res.json();
         })
         .then((data) => {
-          dispatch(
-            expenseActions.addExpense({ id: data.name, ...expenseData })
-          );
-          console.log("Expense successfully added");
+          dispatch(expenseActions.addExpense({ id: data.name, ...expenseData }));
           resetForm();
         })
         .catch((err) => alert(err.message));
@@ -116,7 +117,6 @@ const Expenses = () => {
       .then((res) => {
         if (!res.ok) throw new Error("Failed to delete expense");
         dispatch(expenseActions.deleteExpense(id));
-        console.log("Expense successfully deleted");
       })
       .catch((err) => alert(err.message));
   };
@@ -129,6 +129,27 @@ const Expenses = () => {
     setEditId(expense.id);
   };
 
+  // Toggle dark/light theme
+  const changeThemeHandler = () => {
+    dispatch(themeActions.toggleTheme());
+  };
+
+  // Download expenses as CSV
+  const downloadCSV = () => {
+    const csvRows = [
+      ["Money", "Description", "Category"],
+      ...expenses.map((exp) => [exp.money, exp.description, exp.category]),
+    ];
+    const csvContent = csvRows.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "expenses.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (!isLoggedIn) {
     return (
       <div style={{ textAlign: "center", marginTop: "2rem" }}>
@@ -138,7 +159,13 @@ const Expenses = () => {
   }
 
   return (
-    <div style={styles.container}>
+    <div
+      style={{
+        ...styles.container,
+        backgroundColor: darkMode ? "#222" : "#f4f0fa",
+        color: darkMode ? "#fff" : "#000",
+      }}
+    >
       <h2>Daily Expenses Tracker</h2>
       <form style={styles.form} onSubmit={submitHandler}>
         <input
@@ -146,19 +173,31 @@ const Expenses = () => {
           placeholder="Money Spent"
           value={money}
           onChange={(e) => setMoney(e.target.value)}
-          style={styles.input}
+          style={{
+            ...styles.input,
+            backgroundColor: darkMode ? "#333" : "#fff",
+            color: darkMode ? "#fff" : "#000",
+          }}
         />
         <input
           type="text"
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          style={styles.input}
+          style={{
+            ...styles.input,
+            backgroundColor: darkMode ? "#333" : "#fff",
+            color: darkMode ? "#fff" : "#000",
+          }}
         />
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          style={styles.input}
+          style={{
+            ...styles.input,
+            backgroundColor: darkMode ? "#333" : "#fff",
+            color: darkMode ? "#fff" : "#000",
+          }}
         >
           <option value="Food">Food</option>
           <option value="Petrol">Petrol</option>
@@ -166,7 +205,14 @@ const Expenses = () => {
           <option value="Entertainment">Entertainment</option>
           <option value="Other">Other</option>
         </select>
-        <button type="submit" style={styles.button}>
+        <button
+          type="submit"
+          style={{
+            ...styles.button,
+            backgroundColor: darkMode ? "#6200ee" : "#6200ee",
+            color: "#fff",
+          }}
+        >
           {editId ? "Update Expense" : "Add Expense"}
         </button>
         {editId && (
@@ -188,14 +234,24 @@ const Expenses = () => {
       {expenses.length === 0 && <p>No expenses added yet.</p>}
       <ul style={styles.list}>
         {expenses.map((exp) => (
-          <li key={exp.id} style={styles.listItem}>
+          <li
+            key={exp.id}
+            style={{
+              ...styles.listItem,
+              backgroundColor: darkMode ? "#333" : "#fff",
+              color: darkMode ? "#fff" : "#000",
+            }}
+          >
             <div style={styles.expenseInfo}>
-              <span style={styles.money}>${exp.money}</span>
+              <span style={styles.money}>₹{exp.money}</span>
               <span>{exp.description}</span>
             </div>
             <div style={styles.actionButtons}>
               <span style={styles.categoryBadge}>{exp.category}</span>
-              <button style={styles.editBtn} onClick={() => editHandler(exp)}>
+              <button
+                style={styles.editBtn}
+                onClick={() => editHandler(exp)}
+              >
                 Edit
               </button>
               <button
@@ -208,23 +264,24 @@ const Expenses = () => {
           </li>
         ))}
       </ul>
+
+      {/* Premium Features */}
       {totalExpenses > 10000 && (
-  <button
-    style={{
-      marginTop: "1rem",
-      padding: "0.6rem 1.2rem",
-      border: "none",
-      borderRadius: 6,
-      backgroundColor: "#ff9800",
-      color: "white",
-      fontWeight: "bold",
-      cursor: "pointer",
-    }}
-    onClick={() => alert("Premium Activated!")}
-  >
-    Activate Premium
-  </button>
-)}
+        <div style={{ marginTop: "1rem" }}>
+          <button
+            style={styles.premiumBtn}
+            onClick={changeThemeHandler}
+          >
+            {darkMode ? "Switch to Light Mode" : "Activate Premium / Dark Mode"}
+          </button>
+          <button
+            style={{ ...styles.premiumBtn, marginLeft: "1rem" }}
+            onClick={downloadCSV}
+          >
+            Download Expenses
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -234,7 +291,6 @@ const styles = {
     maxWidth: 600,
     margin: "2rem auto",
     padding: "2rem",
-    backgroundColor: "#f4f0fa",
     borderRadius: 10,
     boxShadow: "0 6px 15px rgba(0,0,0,0.1)",
     textAlign: "center",
@@ -256,10 +312,8 @@ const styles = {
     padding: "0.6rem",
     borderRadius: 6,
     border: "none",
-    backgroundColor: "#6200ee",
-    color: "white",
-    cursor: "pointer",
     fontWeight: "bold",
+    cursor: "pointer",
   },
   list: {
     listStyle: "none",
@@ -275,7 +329,6 @@ const styles = {
     alignItems: "center",
     padding: "0.8rem 1rem",
     borderRadius: 8,
-    backgroundColor: "white",
     boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
   },
   expenseInfo: { display: "flex", flexDirection: "column", textAlign: "left" },
@@ -303,6 +356,15 @@ const styles = {
     border: "none",
     backgroundColor: "#f44336",
     color: "white",
+    cursor: "pointer",
+  },
+  premiumBtn: {
+    padding: "0.6rem 1.2rem",
+    border: "none",
+    borderRadius: 6,
+    backgroundColor: "#ff9800",
+    color: "white",
+    fontWeight: "bold",
     cursor: "pointer",
   },
 };
