@@ -1,11 +1,10 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { useEffect } from "react";
-import AuthContext from "../components/store/auth-context";
-
+import { useSelector } from "react-redux";
 const FIREBASE_KEY = process.env.REACT_APP_FIREBASE_API_KEY;
 
 const UpdateProfile = ({ setIsUpdating }) => {
-  const authCtx = useContext(AuthContext);
+  const token = useSelector((state) => state.auth.token);
   const [fullName, setFullName] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +18,7 @@ const UpdateProfile = ({ setIsUpdating }) => {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idToken: authCtx.token }),
+            body: JSON.stringify({ idToken: token }),
           }
         );
 
@@ -43,7 +42,7 @@ const UpdateProfile = ({ setIsUpdating }) => {
     };
 
     fetchUserData();
-  }, [authCtx.token]);
+  }, [token]);
 
   const updateHandler = async () => {
     if (!fullName && !photoUrl) {
@@ -60,7 +59,7 @@ const UpdateProfile = ({ setIsUpdating }) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            idToken: authCtx.token,
+            idToken: token,
             displayName: fullName || undefined,
             photoUrl: photoUrl || undefined,
             returnSecureToken: true,

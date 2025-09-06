@@ -1,14 +1,14 @@
-import { useState, useRef, useContext } from "react";
+import { useState, useRef} from "react";
 import { useNavigate } from "react-router-dom";
-import AuthContext from "./store/auth-context";
 import classes from "./AuthForm.module.css";
+import { authActions } from "./store/auth";
+import { useDispatch } from "react-redux";
 
 const FIREBASE_KEY = process.env.REACT_APP_FIREBASE_API_KEY;
 
 const AuthForm = () => {
-  const authCtx = useContext(AuthContext);
   const navigate = useNavigate();
-
+const dispatch = useDispatch();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -56,7 +56,7 @@ const AuthForm = () => {
         return res.json();
       })
       .then((data) => {
-        authCtx.login(data.idToken, data.localId);
+       dispatch(authActions.login({ token: data.idToken, userId: data.localId }));
         // console.log(data)
         navigate("/welcome", { replace: true });
       })

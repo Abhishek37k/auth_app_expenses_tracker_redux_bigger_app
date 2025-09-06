@@ -1,13 +1,13 @@
-import { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import AuthContext from "../store/auth-context";
-
+import { useDispatch, useSelector } from "react-redux";
+import { authActions } from "../store/auth";
 const Navbar = () => {
-  const authCtx = useContext(AuthContext);
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
   const logoutHandler = () => {
-    authCtx.logout();
+    dispatch(authActions.logout());
+
     navigate("/auth", { replace: true });
   };
 
@@ -15,7 +15,7 @@ const Navbar = () => {
     <nav style={styles.navbar}>
       <h1 style={styles.logo}>Expense Tracker</h1>
       <div>
-        {authCtx.isLoggedIn ? (
+        {isLoggedIn ? (
           <button style={styles.logoutBtn} onClick={logoutHandler}>
             Logout
           </button>

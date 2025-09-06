@@ -1,14 +1,15 @@
 import { Routes, Route } from "react-router-dom";
 import AuthForm from "./components/AuthForm";
-import { AuthContextProvider } from "./components/store/auth-context";
+import store from "../src/components/store/index"; 
 import Home from "./components/pages/Home";
 import Navbar from "./components/layout/Navbar";
+import { Provider } from "react-redux";
 import Welcome from "./components/pages/Welcome";
 import ForgetPassword from "./components/pages/ForgetPassword";
 import Expenses from "./components/expenses/Expenses";
 function App() {
   return (
-    <AuthContextProvider>
+   <Provider store={store}>
       <Navbar />
       <Routes>
         {" "}
@@ -22,7 +23,7 @@ function App() {
         <Route path="*" element={<Home />} />
         <Route path="/" element={<Home />} />
       </Routes>
-    </AuthContextProvider>
+    </Provider>
   );
 }
 

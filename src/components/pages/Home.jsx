@@ -1,22 +1,14 @@
-import { useContext } from "react";
-// import {  useNavigate } from "react-router-dom";
-import AuthContext from "../store/auth-context";
-
+import {  useSelector } from "react-redux";
 const Home = () => {
-  const authCtx = useContext(AuthContext);
-  // const navigate = useNavigate();
-
-  
-
+ 
+ const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   return (
     <div style={styles.container}>
-   
-
       {/* Page Content */}
       <main style={styles.main}>
         <h1>Welcome to MyApp 🚀</h1>
         <p>
-          {authCtx.isLoggedIn
+          {isLoggedIn
             ? "You are logged in! Enjoy browsing."
             : "Please log in to continue."}
         </p>

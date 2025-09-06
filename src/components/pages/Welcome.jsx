@@ -1,10 +1,10 @@
-import { useContext, useState, useEffect } from "react";
-import AuthContext from "../store/auth-context";
+import {  useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import UpdateProfile from "../Update_profile";
 import { useNavigate } from "react-router-dom";
 
 const Welcome = () => {
-  const authCtx = useContext(AuthContext);
+  const token = useSelector((state) => state.auth.token);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(null);
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ const Welcome = () => {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idToken: authCtx.token }),
+            body: JSON.stringify({ idToken: token }),
           }
         );
         const data = await response.json();
@@ -28,11 +28,12 @@ const Welcome = () => {
         }
       } catch (err) {
         console.error("Polling error:", err);
+        setIsEmailVerified(false);
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [authCtx.token]);
+  }, [token]);
 
   const sendVerificationHandler = async () => {
     try {
@@ -43,7 +44,7 @@ const Welcome = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             requestType: "VERIFY_EMAIL",
-            idToken: authCtx.token,
+            idToken: token,
           }),
         }
       );

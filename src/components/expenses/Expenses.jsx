@@ -1,35 +1,50 @@
-import { useState, useEffect, useContext } from "react";
-import AuthContext from "../store/auth-context";
+import { useEffect } from "react";
+import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { expenseActions } from "../store/expense";
 
 const Expenses = () => {
-  const authCtx = useContext(AuthContext);
+  const dispatch = useDispatch();
+
+  // ✅ Get auth state from Redux
+  const token = useSelector((state) => state.auth.token);
+  const userId = useSelector((state) => state.auth.userId);
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+
+  // ✅ Get expenses state from Redux
+  const expenses = useSelector((state) => state.expense.expenses);
+
   const [money, setMoney] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Food");
-  const [expenses, setExpenses] = useState([]);
-  const [editId, setEditId] = useState(null); // currently editing expense
+  const [editId, setEditId] = useState(null);
 
-  // Fetch expenses from Firebase on load
   useEffect(() => {
-    if (!authCtx.userId || !authCtx.token) return;
+    // if (!userId || !token) return;
 
+    // Fetch expenses from Firebase
     fetch(
-      `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${authCtx.userId}.json?auth=${authCtx.token}`
+      `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${userId}.json?auth=${token}`
     )
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch expenses");
         return res.json();
       })
       .then((data) => {
-        if (!data) return setExpenses([]);
+        if (!data) {
+          dispatch(expenseActions.setExpenses([]));
+          return;
+        }
         const loaded = Object.entries(data).map(([key, value]) => ({
           id: key,
           ...value,
         }));
-        setExpenses(loaded.reverse()); // newest first
+        console.log("Fetched expenses:", loaded);
+        dispatch(expenseActions.setExpenses(loaded.reverse()));
       })
       .catch((err) => alert(err.message));
-  }, [authCtx.userId, authCtx.token]);
+  }, [userId, token, dispatch]);
+        const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.money), 0);
 
   const resetForm = () => {
     setMoney("");
@@ -48,7 +63,7 @@ const Expenses = () => {
     if (editId) {
       // Edit existing expense (PUT)
       fetch(
-        `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${authCtx.userId}/${editId}.json?auth=${authCtx.token}`,
+        `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${userId}/${editId}.json?auth=${token}`,
         {
           method: "PUT",
           body: JSON.stringify(expenseData),
@@ -60,8 +75,8 @@ const Expenses = () => {
           return res.json();
         })
         .then(() => {
-          setExpenses((prev) =>
-            prev.map((exp) => (exp.id === editId ? { id: editId, ...expenseData } : exp))
+          dispatch(
+            expenseActions.updateExpense({ id: editId, ...expenseData })
           );
           console.log("Expense successfully updated");
           resetForm();
@@ -70,7 +85,7 @@ const Expenses = () => {
     } else {
       // Add new expense (POST)
       fetch(
-        `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${authCtx.userId}.json?auth=${authCtx.token}`,
+        `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${userId}.json?auth=${token}`,
         {
           method: "POST",
           body: JSON.stringify(expenseData),
@@ -82,7 +97,9 @@ const Expenses = () => {
           return res.json();
         })
         .then((data) => {
-          setExpenses((prev) => [{ id: data.name, ...expenseData }, ...prev]);
+          dispatch(
+            expenseActions.addExpense({ id: data.name, ...expenseData })
+          );
           console.log("Expense successfully added");
           resetForm();
         })
@@ -93,12 +110,12 @@ const Expenses = () => {
   // Delete expense
   const deleteHandler = (id) => {
     fetch(
-      `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${authCtx.userId}/${id}.json?auth=${authCtx.token}`,
+      `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${userId}/${id}.json?auth=${token}`,
       { method: "DELETE" }
     )
       .then((res) => {
         if (!res.ok) throw new Error("Failed to delete expense");
-        setExpenses((prev) => prev.filter((exp) => exp.id !== id));
+        dispatch(expenseActions.deleteExpense(id));
         console.log("Expense successfully deleted");
       })
       .catch((err) => alert(err.message));
@@ -112,7 +129,7 @@ const Expenses = () => {
     setEditId(expense.id);
   };
 
-  if (!authCtx.isLoggedIn) {
+  if (!isLoggedIn) {
     return (
       <div style={{ textAlign: "center", marginTop: "2rem" }}>
         <h2>Please login to add expenses</h2>
@@ -155,7 +172,11 @@ const Expenses = () => {
         {editId && (
           <button
             type="button"
-            style={{ ...styles.button, backgroundColor: "#f44336", marginTop: "0.5rem" }}
+            style={{
+              ...styles.button,
+              backgroundColor: "#f44336",
+              marginTop: "0.5rem",
+            }}
             onClick={resetForm}
           >
             Cancel
@@ -177,30 +198,113 @@ const Expenses = () => {
               <button style={styles.editBtn} onClick={() => editHandler(exp)}>
                 Edit
               </button>
-              <button style={styles.deleteBtn} onClick={() => deleteHandler(exp.id)}>
+              <button
+                style={styles.deleteBtn}
+                onClick={() => deleteHandler(exp.id)}
+              >
                 Delete
               </button>
             </div>
           </li>
         ))}
       </ul>
+      {totalExpenses > 10000 && (
+  <button
+    style={{
+      marginTop: "1rem",
+      padding: "0.6rem 1.2rem",
+      border: "none",
+      borderRadius: 6,
+      backgroundColor: "#ff9800",
+      color: "white",
+      fontWeight: "bold",
+      cursor: "pointer",
+    }}
+    onClick={() => alert("Premium Activated!")}
+  >
+    Activate Premium
+  </button>
+)}
     </div>
   );
 };
 
 const styles = {
-  container: { maxWidth: 600, margin: "2rem auto", padding: "2rem", backgroundColor: "#f4f0fa", borderRadius: 10, boxShadow: "0 6px 15px rgba(0,0,0,0.1)", textAlign: "center" },
-  form: { display: "flex", flexDirection: "column", gap: "0.7rem", marginTop: "1rem" },
-  input: { padding: "0.6rem 0.8rem", borderRadius: 6, border: "1px solid #ccc", fontSize: "1rem", outline: "none" },
-  button: { padding: "0.6rem", borderRadius: 6, border: "none", backgroundColor: "#6200ee", color: "white", cursor: "pointer", fontWeight: "bold" },
-  list: { listStyle: "none", padding: 0, marginTop: "2rem", display: "flex", flexDirection: "column", gap: "0.8rem" },
-  listItem: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.8rem 1rem", borderRadius: 8, backgroundColor: "white", boxShadow: "0 2px 6px rgba(0,0,0,0.05)" },
+  container: {
+    maxWidth: 600,
+    margin: "2rem auto",
+    padding: "2rem",
+    backgroundColor: "#f4f0fa",
+    borderRadius: 10,
+    boxShadow: "0 6px 15px rgba(0,0,0,0.1)",
+    textAlign: "center",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.7rem",
+    marginTop: "1rem",
+  },
+  input: {
+    padding: "0.6rem 0.8rem",
+    borderRadius: 6,
+    border: "1px solid #ccc",
+    fontSize: "1rem",
+    outline: "none",
+  },
+  button: {
+    padding: "0.6rem",
+    borderRadius: 6,
+    border: "none",
+    backgroundColor: "#6200ee",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+  list: {
+    listStyle: "none",
+    padding: 0,
+    marginTop: "2rem",
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.8rem",
+  },
+  listItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0.8rem 1rem",
+    borderRadius: 8,
+    backgroundColor: "white",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+  },
   expenseInfo: { display: "flex", flexDirection: "column", textAlign: "left" },
   money: { fontWeight: "bold", fontSize: "1.1rem", color: "#6200ee" },
-  categoryBadge: { padding: "0.2rem 0.5rem", borderRadius: 6, backgroundColor: "#e0e0e0", fontSize: "0.8rem", fontWeight: "bold", marginRight: "0.5rem" },
+  categoryBadge: {
+    padding: "0.2rem 0.5rem",
+    borderRadius: 6,
+    backgroundColor: "#e0e0e0",
+    fontSize: "0.8rem",
+    fontWeight: "bold",
+    marginRight: "0.5rem",
+  },
   actionButtons: { display: "flex", alignItems: "center", gap: "0.5rem" },
-  editBtn: { padding: "0.3rem 0.5rem", borderRadius: 6, border: "none", backgroundColor: "#03a9f4", color: "white", cursor: "pointer" },
-  deleteBtn: { padding: "0.3rem 0.5rem", borderRadius: 6, border: "none", backgroundColor: "#f44336", color: "white", cursor: "pointer" },
+  editBtn: {
+    padding: "0.3rem 0.5rem",
+    borderRadius: 6,
+    border: "none",
+    backgroundColor: "#03a9f4",
+    color: "white",
+    cursor: "pointer",
+  },
+  deleteBtn: {
+    padding: "0.3rem 0.5rem",
+    borderRadius: 6,
+    border: "none",
+    backgroundColor: "#f44336",
+    color: "white",
+    cursor: "pointer",
+  },
 };
 
 export default Expenses;
