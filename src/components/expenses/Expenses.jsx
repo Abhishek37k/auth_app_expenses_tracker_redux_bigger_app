@@ -63,7 +63,11 @@ const Expenses = () => {
   // Add or Edit Expense
   const submitHandler = (e) => {
     e.preventDefault();
-    if (!money || !description) return alert("Please fill all fields");
+
+  
+  if (money === "" || description.trim() === "") {
+    return; // stop here, don't call fetch
+  }
 
     const expenseData = { money, description, category };
 
