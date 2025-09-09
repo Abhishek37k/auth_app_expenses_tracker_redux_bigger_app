@@ -1,4 +1,4 @@
-import { useState, useRef} from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import classes from "./AuthForm.module.css";
 import { authActions } from "./store/auth";
@@ -8,7 +8,7 @@ const FIREBASE_KEY = process.env.REACT_APP_FIREBASE_API_KEY;
 
 const AuthForm = () => {
   const navigate = useNavigate();
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -20,33 +20,21 @@ const dispatch = useDispatch();
     setIsLogin((prev) => !prev);
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
-    const enteredEmail = emailInputRef.current.value;
-    const enteredPassword = passwordInputRef.current.value;
-    const enteredConfirmPassword = confirmPasswordRef.current?.value;
-
-    if (!isLogin && enteredPassword !== enteredConfirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
-
+  // 🔹 Login handler
+  const loginHandler = (email, password) => {
     setIsLoading(true);
-
-    const url = isLogin
-      ? `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_KEY}`
-      : `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_KEY}`;
-
-    fetch(url, {
-      method: "POST",
-      body: JSON.stringify({
-        email: enteredEmail,
-        password: enteredPassword,
-        returnSecureToken: true,
-      }),
-      headers: { "Content-Type": "application/json" },
-    })
+    fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_KEY}`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+          returnSecureToken: true,
+        }),
+        headers: { "Content-Type": "application/json" },
+      }
+    )
       .then(async (res) => {
         setIsLoading(false);
         if (!res.ok) {
@@ -56,13 +44,63 @@ const dispatch = useDispatch();
         return res.json();
       })
       .then((data) => {
-       dispatch(authActions.login({ token: data.idToken, userId: data.localId }));
-        // console.log(data)
+        dispatch(
+          authActions.login({ token: data.idToken, userId: data.localId })
+        );
         navigate("/welcome", { replace: true });
       })
-      .catch((err) => {
-        alert(err.message);
-      });
+      .catch((err) => alert(err.message));
+  };
+
+  // 🔹 Signup handler
+  const signupHandler = (email, password, confirmPassword) => {
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    setIsLoading(true);
+    fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_KEY}`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+          returnSecureToken: true,
+        }),
+        headers: { "Content-Type": "application/json" },
+      }
+    )
+      .then(async (res) => {
+        setIsLoading(false);
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error.message);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        dispatch(
+          authActions.login({ token: data.idToken, userId: data.localId })
+        );
+        navigate("/welcome", { replace: true });
+      })
+      .catch((err) => alert(err.message));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const enteredEmail = emailInputRef.current.value;
+    const enteredPassword = passwordInputRef.current.value;
+    const enteredConfirmPassword = confirmPasswordRef.current?.value;
+
+    if (isLogin) {
+      loginHandler(enteredEmail, enteredPassword);
+    } else {
+      signupHandler(enteredEmail, enteredPassword, enteredConfirmPassword);
+    }
 
     // Reset fields
     emailInputRef.current.value = "";
@@ -80,12 +118,22 @@ const dispatch = useDispatch();
         </div>
         <div className={classes.control}>
           <label htmlFor="password">Your Password</label>
-          <input type="password" id="password" ref={passwordInputRef} required />
+          <input
+            type="password"
+            id="password"
+            ref={passwordInputRef}
+            required
+          />
         </div>
         {!isLogin && (
           <div className={classes.control}>
             <label htmlFor="confirmPassword">Confirm Password</label>
-            <input type="password" id="confirmPassword" ref={confirmPasswordRef} required />
+            <input
+              type="password"
+              id="confirmPassword"
+              ref={confirmPasswordRef}
+              required
+            />
           </div>
         )}
 
