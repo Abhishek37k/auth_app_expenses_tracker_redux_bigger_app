@@ -13,13 +13,10 @@ function App() {
       <Navbar />
       <Routes>
         {" "}
-        <Route path="/forgot-password" element={<ForgetPassword />} />
-        {/* Home page */}
-        {/* Auth page */}
+        <Route path="/forget-password" element={<ForgetPassword />} />
         <Route path="/auth" element={<AuthForm />} />
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/expenses" element={<Expenses />} />
-        {/* Optional: catch-all for invalid routes */}
         <Route path="*" element={<Home />} />
         <Route path="/" element={<Home />} />
       </Routes>

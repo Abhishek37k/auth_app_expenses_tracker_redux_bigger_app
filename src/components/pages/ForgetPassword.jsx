@@ -9,6 +9,7 @@ const ForgetPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("sent");
     setIsLoading(true);
     setMessage(null);
 

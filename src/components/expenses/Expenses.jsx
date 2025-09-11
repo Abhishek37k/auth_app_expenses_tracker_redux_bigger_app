@@ -1,24 +1,20 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { expenseActions } from "../store/expense";
-import { themeActions } from "../store/theme"; // Make sure you have theme reducer
+import { themeActions } from "../store/theme"; 
 import React from "react";
 
 const Expenses = () => {
   const dispatch = useDispatch();
 
-  // Auth state
   const token = useSelector((state) => state.auth.token);
   const userId = useSelector((state) => state.auth.userId);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
 
-  // Expenses state
   const expenses = useSelector((state) => state.expense.expenses);
 
-  // Theme state
   const darkMode = useSelector((state) => state.theme.darkMode);
 
-  // Local state
   const [money, setMoney] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Food");
@@ -29,7 +25,6 @@ const Expenses = () => {
     0
   );
 
-  // Fetch expenses from Firebase
   useEffect(() => {
     if (!userId || !token) return;
     fetch(
@@ -60,19 +55,16 @@ const Expenses = () => {
     setEditId(null);
   };
 
-  // Add or Edit Expense
   const submitHandler = (e) => {
     e.preventDefault();
 
-  
-  if (money === "" || description.trim() === "") {
-    return; // stop here, don't call fetch
+    if (money === "" || description.trim() === "") {
+    return; 
   }
 
     const expenseData = { money, description, category };
 
     if (editId) {
-      // Edit existing expense (PUT)
       fetch(
         `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${userId}/${editId}.json?auth=${token}`,
         {
@@ -91,7 +83,6 @@ const Expenses = () => {
         })
         .catch((err) => alert(err.message));
     } else {
-      // Add new expense (POST)
       fetch(
         `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${userId}.json?auth=${token}`,
         {
@@ -112,7 +103,6 @@ const Expenses = () => {
     }
   };
 
-  // Delete expense
   const deleteHandler = (id) => {
     fetch(
       `https://expense-tracker-react-875b9-default-rtdb.firebaseio.com/expenses/${userId}/${id}.json?auth=${token}`,
@@ -125,7 +115,6 @@ const Expenses = () => {
       .catch((err) => alert(err.message));
   };
 
-  // Start editing an expense
   const editHandler = (expense) => {
     setMoney(expense.money);
     setDescription(expense.description);
@@ -133,12 +122,10 @@ const Expenses = () => {
     setEditId(expense.id);
   };
 
-  // Toggle dark/light theme
   const changeThemeHandler = () => {
     dispatch(themeActions.toggleTheme());
   };
 
-  // Download expenses as CSV
   const downloadCSV = () => {
     const csvRows = [
       ["Money", "Description", "Category"],

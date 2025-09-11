@@ -20,7 +20,6 @@ const AuthForm = () => {
     setIsLogin((prev) => !prev);
   };
 
-  // 🔹 Login handler
   const loginHandler = (email, password) => {
     setIsLoading(true);
     fetch(
@@ -52,7 +51,6 @@ const AuthForm = () => {
       .catch((err) => alert(err.message));
   };
 
-  // 🔹 Signup handler
   const signupHandler = (email, password, confirmPassword) => {
     if (password !== confirmPassword) {
       alert("Passwords do not match!");

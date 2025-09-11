@@ -9,7 +9,6 @@ const UpdateProfile = ({ setIsUpdating }) => {
   const [photoUrl, setPhotoUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch existing user data on component mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
